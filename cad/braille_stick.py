@@ -386,7 +386,20 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
     return p
 
 
+def test_inscribed_radius() -> None:
+    """Test the inscribed radius function."""
+    # Comparison
+    assert math.isclose(
+        inscribed_radius(n=6, side_length=2), math.sqrt(3), rel_tol=1e-9
+    )
+    assert math.isclose(
+        1 / math.sqrt(3), inscribed_radius(n=3, side_length=2), rel_tol=1e-9
+    )
+
+
 if __name__ == "__main__":
+    test_inscribed_radius()
+
     parts = {
         "braille_stick": show(make_braille_stick(BrailleStickSpec())),
     }
