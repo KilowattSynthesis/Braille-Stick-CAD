@@ -425,6 +425,17 @@ if __name__ == "__main__":
                 )
             )
         ),
+        "braille_stick_alphabet_msg_triangle_2": show(
+            make_braille_stick(
+                BrailleStickSpec(
+                    cells_each_face=(
+                        list("Blitzed monks javelin through warp."),
+                        list("Cryptic fjords amazed the vixen."),
+                        list("Quokka jumps, vexing bold wizardry."),
+                    )
+                )
+            )
+        ),
     }
 
     logger.info("Showing CAD model(s)")
