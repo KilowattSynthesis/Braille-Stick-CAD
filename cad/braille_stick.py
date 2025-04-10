@@ -28,7 +28,7 @@ ASCII_TO_BRAILLE_UNICODE_MAPPING = {
     "$": "⠫",
     "%": "⠩",
     "&": "⠯",
-    "": "⠄",
+    # "": "⠄",  # In Grade 1, no specific meaning.
     "(": "⠷",
     ")": "⠾",
     "*": "⠡",
@@ -212,9 +212,7 @@ class BrailleCell:
 class BrailleStickSpec:
     """Specification for braille_stick."""
 
-    cells_each_face: tuple[
-        list[str | int], list[str | int], list[str | int]
-    ] = (
+    cells_each_face: tuple[list[str | int], ...] = (
         list("ABCDEFGHI"),
         list("JKLMNOPQR"),
         list("STUVWXYZ#"),
@@ -402,6 +400,31 @@ if __name__ == "__main__":
 
     parts = {
         "braille_stick": show(make_braille_stick(BrailleStickSpec())),
+        "braille_stick_alphabet_msg_triangle": show(
+            make_braille_stick(
+                BrailleStickSpec(
+                    cells_each_face=(
+                        list("Jumping wizards vex Brock!"),
+                        list("Zany knights flew up high."),
+                        list("The DJ quiz baffled Max tonite."),
+                    )
+                )
+            )
+        ),
+        "braille_stick_alphabet_msg_pentagon": show(
+            make_braille_stick(
+                BrailleStickSpec(
+                    cells_each_face=(
+                        list("Jumping wizards vex Brock!"),
+                        list("Zany knights flew up high."),
+                        list("The DJ quiz baffled Max tonite."),
+                        list("Violet hexbugs jam the crowd."),
+                        list("Quick fangs blazed with envy."),
+                    ),
+                    stick_face_width=18,
+                )
+            )
+        ),
     }
 
     logger.info("Showing CAD model(s)")
@@ -413,6 +436,8 @@ if __name__ == "__main__":
         assert isinstance(part, bd.Part | bd.Solid | bd.Compound), (
             f"{name} is not an expected type ({type(part)})"
         )
+
+        logger.info(f"Exporting {name}. Bounding box: {part.bounding_box()}")
 
         bd.export_stl(part, str(export_folder / f"{name}.stl"))
         bd.export_step(part, str(export_folder / f"{name}.step"))
