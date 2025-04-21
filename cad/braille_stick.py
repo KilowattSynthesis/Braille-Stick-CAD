@@ -212,11 +212,7 @@ class BrailleCell:
 class BrailleStickSpec:
     """Specification for braille_stick."""
 
-    cells_each_face: tuple[list[str | int], ...] = (
-        list("ABCDEFGHI"),
-        list("JKLMNOPQR"),
-        list("STUVWXYZ#"),
-    )
+    cells_each_face: tuple[list[str | int], ...]
 
     # Stick dimensions.
     stick_face_width: float = 28.0
@@ -227,8 +223,10 @@ class BrailleStickSpec:
     dot_pitch_x: float = 2.5
     dot_pitch_y: float = 2.5
     cell_pitch_x: float = 6.0
-    dot_diameter: float = 1.5
-    dot_height: float = 1.0
+    dot_diameter_base: float = 1.5
+    dot_diameter_top: float = 1.1
+    dot_length: float = 0.8
+    dot_top_fillet_radius: float = 0.4
 
     def __post_init__(self) -> None:
         """Post initialization checks."""
@@ -329,6 +327,18 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
     )
     p += stick
 
+    # Prepare the dot shape (extending up from XY plane).
+    dot_part = bd.Part(None) + bd.Cone(
+        bottom_radius=spec.dot_diameter_base / 2,
+        top_radius=spec.dot_diameter_top / 2,
+        height=spec.dot_length,
+        align=(bd.Align.CENTER, bd.Align.CENTER, bd.Align.MIN),
+    )
+    dot_part = dot_part.fillet(
+        radius=spec.dot_top_fillet_radius,
+        edge_list=[dot_part.edges().sort_by(bd.Axis.Z)[-1]],
+    )
+
     # Find the faces of the stick, and draw braille on them (treating them as
     # sketch surfaces).
     # Select the side_count largest faces.
@@ -366,19 +376,10 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
                 sketch += (
                     bd.Plane(face)  # pyright: ignore[reportOperatorIssue]
                     * bd.Pos((dot_y, -dot_x))
-                    * bd.Circle(
-                        radius=spec.dot_diameter / 2,
-                    )
+                    * dot_part
                 )
 
-        # Extrude the sketch to create the braille dots.
-        # assert isinstance(sketch, bd.Compound)  # Type checking.
-        dot_extrude = bd.extrude(
-            sketch,  # pyright: ignore[reportArgumentType]
-            amount=spec.dot_height,
-            clean=True,
-        )
-        p += dot_extrude
+        p += sketch
         logger.debug(f"Done with face {_face_num + 1} of {spec.side_count}")
 
     return p
@@ -399,8 +400,30 @@ if __name__ == "__main__":
     test_inscribed_radius()
 
     parts = {
-        "braille_stick": show(make_braille_stick(BrailleStickSpec())),
-        "braille_stick_alphabet_msg_triangle": show(
+        # Create simple sample for fast generation/development.
+        "braille_stick_dev": show(
+            make_braille_stick(
+                BrailleStickSpec(
+                    cells_each_face=(
+                        list("ABC"),
+                        list(" D "),
+                        list(" G "),
+                    )
+                )
+            )
+        ),
+        "braille_stick_alphabet": (
+            make_braille_stick(
+                BrailleStickSpec(
+                    cells_each_face=(
+                        list("ABCDEFGHI"),
+                        list("JKLMNOPQR"),
+                        list("STUVWXYZ#"),
+                    )
+                )
+            )
+        ),
+        "braille_stick_alphabet_msg_triangle": (
             make_braille_stick(
                 BrailleStickSpec(
                     cells_each_face=(
@@ -411,7 +434,7 @@ if __name__ == "__main__":
                 )
             )
         ),
-        "braille_stick_alphabet_msg_pentagon": show(
+        "braille_stick_alphabet_msg_pentagon": (
             make_braille_stick(
                 BrailleStickSpec(
                     cells_each_face=(
@@ -425,7 +448,7 @@ if __name__ == "__main__":
                 )
             )
         ),
-        "braille_stick_alphabet_msg_triangle_2": show(
+        "braille_stick_alphabet_msg_triangle_2": (
             make_braille_stick(
                 BrailleStickSpec(
                     cells_each_face=(
@@ -452,3 +475,5 @@ if __name__ == "__main__":
 
         bd.export_stl(part, str(export_folder / f"{name}.stl"))
         bd.export_step(part, str(export_folder / f"{name}.step"))
+
+    logger.info(f"Done exporting CAD models: {export_folder}")
