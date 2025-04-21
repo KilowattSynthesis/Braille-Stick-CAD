@@ -347,6 +347,20 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
     assert len(faces) == spec.side_count, (
         f"Expected {spec.side_count} faces, got {len(faces)}"
     )
+
+    def angle_in_yz(face: bd.Face) -> float:
+        """Get the angle of the face in the YZ plane."""
+        return (
+            math.atan2(
+                stick.center().Y - face.center().Y,
+                face.center().Z - stick.center().Z,
+            )
+            + (2 * math.pi)  # Make all positive.
+        ) % (2 * math.pi)
+
+    # Sort faces by angle to scroll around.
+    faces.sort(key=angle_in_yz)
+
     for _face_num, (face, normalized_cell_list, dot_mode) in enumerate(
         zip(
             faces,
@@ -375,6 +389,7 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
 
                 sketch += (
                     bd.Plane(face)  # pyright: ignore[reportOperatorIssue]
+                    * bd.Rotation(Z=180)  # Ensure first cells is at X=0 side.
                     * bd.Pos((dot_y, -dot_x))
                     * dot_part
                 )
@@ -408,6 +423,8 @@ if __name__ == "__main__":
                         list("ABC"),
                         list(" D "),
                         list(" G "),
+                        list("#A "),
+                        list("#B "),
                     )
                 )
             )
