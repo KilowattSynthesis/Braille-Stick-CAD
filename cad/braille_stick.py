@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import build123d as bd
+import pydash
 from build123d_ease import show
 from loguru import logger
 
@@ -325,6 +326,21 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
         polygon_outline,
         amount=spec.total_length,
     )
+    # Round the remaining parts of the stick.
+    _stick_end_faces = [
+        face
+        for face in stick.faces()
+        if abs(face.normal_at().X) > 0.9  # noqa: PLR2004
+    ]
+    _stick_end_edges = pydash.flatten(
+        face.edges() for face in _stick_end_faces
+    )
+    _max_fillet = stick.max_fillet(
+        edge_list=_stick_end_edges, max_iterations=1000
+    )
+    logger.debug(f"Max fillet: {_max_fillet}")
+    stick = stick.fillet(radius=_max_fillet, edge_list=_stick_end_edges)
+    del _stick_end_faces, _stick_end_edges, _max_fillet
     p += stick
 
     # Prepare the dot shape (extending up from XY plane).

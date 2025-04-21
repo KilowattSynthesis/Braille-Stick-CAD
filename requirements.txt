@@ -5,6 +5,8 @@ git+https://github.com/gumyr/bd_warehouse
 
 loguru
 
+pydash
+
 # Development tool requirements.
 ruff
 pyright
