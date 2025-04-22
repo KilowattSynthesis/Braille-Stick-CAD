@@ -217,7 +217,7 @@ class BrailleStickSpec:
 
     # Stick dimensions.
     stick_face_width: float = 15.0
-    stick_face_thickness: float = 1.3
+    stick_face_thickness: float = 2.0
     stick_length_fillet_radius: float = 1.0
 
     # Braille dimensions.
