@@ -476,18 +476,7 @@ if __name__ == "__main__":
                 )
             )
         ),
-        "braille_stick_alphabet_msg_triangle": (
-            make_braille_stick(
-                BrailleStickSpec(
-                    cells_each_face=(
-                        list("Jumping wizards vex Brock!"),
-                        list("Zany knights flew up high."),
-                        list("The DJ quiz baffled Max tonite."),
-                    )
-                )
-            )
-        ),
-        "braille_stick_alphabet_msg_pentagon": (
+        "braille_stick_alphabet_msg_pentagon_1": (
             make_braille_stick(
                 BrailleStickSpec(
                     cells_each_face=(
