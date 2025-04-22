@@ -216,9 +216,9 @@ class BrailleStickSpec:
     cells_each_face: tuple[list[str | int], ...]
 
     # Stick dimensions.
-    stick_face_width: float = 28.0
-    stick_face_thickness: float = 2.0
-    stick_corner_radius: float = 1.0
+    stick_face_width: float = 15.0
+    stick_face_thickness: float = 1.3
+    stick_length_fillet_radius: float = 1.0
 
     # Braille dimensions.
     dot_pitch_x: float = 2.5
@@ -305,16 +305,18 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
     polygon_face_outside = bd.RegularPolygon(
         radius=spec.polygon_inscribed_radius,
         side_count=spec.side_count,
+        major_radius=False,
     )
     polygon_inside_face = bd.RegularPolygon(
         radius=spec.polygon_inscribed_radius - spec.stick_face_thickness,
         side_count=spec.side_count,
+        major_radius=False,
     )
     polygon_face_outside = bd.fillet(
-        polygon_face_outside.vertices(), radius=spec.stick_corner_radius
+        polygon_face_outside.vertices(), radius=spec.stick_length_fillet_radius
     )
     polygon_inside_face = bd.fillet(
-        polygon_inside_face.vertices(), radius=spec.stick_corner_radius
+        polygon_inside_face.vertices(), radius=spec.stick_length_fillet_radius
     )
     polygon_outline = bd.Plane.YZ * bd.Sketch(
         polygon_face_outside - polygon_inside_face
@@ -377,7 +379,7 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
     # Sort faces by angle to scroll around.
     faces.sort(key=angle_in_yz)
 
-    for _face_num, (face, normalized_cell_list, dot_mode) in enumerate(
+    for face_num, (face, normalized_cell_list, dot_mode) in enumerate(
         zip(
             faces,
             spec.normalized_cells_each_face,
@@ -405,13 +407,31 @@ def make_braille_stick(spec: BrailleStickSpec) -> bd.Part | bd.Compound:
 
                 sketch += (
                     bd.Plane(face)  # pyright: ignore[reportOperatorIssue]
-                    * bd.Rotation(Z=180)  # Ensure first cells is at X=0 side.
-                    * bd.Pos((dot_y, -dot_x))
+                    * bd.Rotation(Z=90)  # Ensure first cells is at X=0 side.
+                    * bd.Pos((dot_x, dot_y))
                     * dot_part
                 )
 
+        # Draw a rectangle on the left edge of the first face.
+        # This is the "start of message" block indicator.
+        if face_num == 0:
+            sketch += (
+                bd.Plane(face)  # pyright: ignore[reportOperatorIssue]
+                * bd.Rotation(Z=90)  # Ensure first cells is at X=0 side.
+                * bd.Pos((-spec.total_length / 2 + 2, 0))
+                * bd.Box(
+                    spec.dot_diameter_base,
+                    (
+                        spec.stick_face_width / 2
+                        - spec.stick_length_fillet_radius * 2
+                    ),
+                    spec.dot_length,
+                    align=(bd.Align.MIN, bd.Align.MIN, bd.Align.MIN),
+                )
+            )
+
         p += sketch
-        logger.debug(f"Done with face {_face_num + 1} of {spec.side_count}")
+        logger.debug(f"Done with face {face_num + 1} of {spec.side_count}")
 
     return p
 
@@ -445,7 +465,7 @@ if __name__ == "__main__":
                 )
             )
         ),
-        "braille_stick_alphabet": (
+        "braille_stick_alphabet": show(
             make_braille_stick(
                 BrailleStickSpec(
                     cells_each_face=(
@@ -477,7 +497,6 @@ if __name__ == "__main__":
                         list("Violet hexbugs jam the crowd."),
                         list("Quick fangs blazed with envy."),
                     ),
-                    stick_face_width=18,
                 )
             )
         ),
